@@ -1349,6 +1349,16 @@ footer {
       <div class="tech-name">Auth0 OAuth2 + RBAC</div>
       <div class="tech-desc">Role-based access control. JWT token validation. Analyst vs Admin roles. All API endpoints protected.</div>
     </div>
+    <div class="tech-cell">
+      <div class="tech-layer">Fingerprinting</div>
+      <div class="tech-name">FingerprintJS Pro</div>
+      <div class="tech-desc">100+ signal browser fingerprinting. Canvas, WebGL, fonts, audio context. Survives IP changes. VPN evasion defense.</div>
+    </div>
+    <div class="tech-cell">
+      <div class="tech-layer">WAF / CDN</div>
+      <div class="tech-name">Cloudflare WAF</div>
+      <div class="tech-desc">Defense agent pushes fingerprint hashes to Cloudflare for global edge blocking. Attack traffic stopped before reaching origin.</div>
+    </div>
     <div class="tech-cell" style="background:var(--red-light);border:2px solid var(--red);">
       <div class="tech-layer" style="color:var(--red);">Defense Agent</div>
       <div class="tech-name" style="color:var(--red);">Autonomous Security Monitor</div>
@@ -1418,9 +1428,16 @@ footer {
         </div>
 
         <div class="card-accent">
+          <h3 style="font-size:14px;margin-bottom:6px;">🎭 Browser Fingerprinting</h3>
+          <div style="font-size:12px;color:var(--ink2);line-height:1.6;">
+            FingerprintJS Pro collects 100+ signals: canvas hash, WebGL renderer, installed fonts, timezone, screen resolution, audio context, hardware concurrency. Hash persists across IP changes. <strong>VPN evasion defense:</strong> Attacker switches IP but fingerprint stays identical → agent detects and blocks on fingerprint, not IP. Combined with hCaptcha Enterprise to detect automated solvers.
+          </div>
+        </div>
+
+        <div class="card-accent">
           <h3 style="font-size:14px;margin-bottom:6px;">🔐 Auth & RBAC</h3>
           <div style="font-size:12px;color:var(--ink2);line-height:1.6;">
-            Auth0 OAuth2 tokens with 1-hour TTL. <strong>Roles:</strong> Analyst (read-only), Admin (write access to pipeline config). JWT signature verified on every FastAPI request. Refresh tokens stored HttpOnly, SameSite=Strict. <strong>Attack vector:</strong> Token replay → mitigated via short TTL + IP binding.
+            Auth0 OAuth2 tokens with 1-hour TTL. <strong>Roles:</strong> Analyst (read-only), Admin (write access to pipeline config). JWT signature verified on every FastAPI request. Refresh tokens stored HttpOnly, SameSite=Strict. <strong>Attack vector:</strong> Token replay → mitigated via short TTL + IP binding + device fingerprint validation.
           </div>
         </div>
 
@@ -1464,6 +1481,20 @@ footer {
           </div>
         </div>
 
+        <div style="background:var(--red-light);border:2px solid var(--red);border-radius:8px;padding:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px;">🚨 Scenario: VPN/VM IP Rotation Attack (Advanced Evasion)</div>
+          <div style="font-size:11px;color:#991b1b;line-height:1.6;">
+            <strong>Log pattern:</strong> IP banned at 14:32:10. New IP appears 14:32:45 (35 seconds later) with identical query pattern, same ticker, same Auth0 fingerprint device ID mismatch.<br>
+            <strong>Agent reasoning:</strong> "IP changed but behavioral fingerprint identical. Browser fingerprint + TLS signature match banned session. VPN hop detected."<br>
+            <strong>Multi-layer response:</strong><br>
+            → <strong>Fingerprint-based block:</strong> Ban applied to browser fingerprint hash (canvas, WebGL, fonts, timezone) — survives IP change.<br>
+            → <strong>JWT revocation:</strong> If authenticated, invalidate all tokens for this user across all devices.<br>
+            → <strong>Challenge escalation:</strong> Force hCaptcha Enterprise (detects automated solvers) + email verification OTP before any new session.<br>
+            → <strong>Account suspension:</strong> If evasion repeats 3+ times within 1 hour → permanent account suspension pending manual review.<br>
+            → <strong>Upstream mitigation:</strong> Agent sends fingerprint hash to Cloudflare WAF for global block across CDN edge — attacker blocked before reaching origin server.
+          </div>
+        </div>
+
         <div style="background:var(--red-light);border:1px solid #fecaca;border-radius:8px;padding:16px;">
           <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px;">🚨 Scenario: MongoDB Injection Attempt</div>
           <div style="font-size:11px;color:#991b1b;line-height:1.6;">
@@ -1500,6 +1531,26 @@ footer {
 
   </div>
 
+  <!-- DEFENSE PHILOSOPHY -->
+  <div style="margin-top:32px;background:linear-gradient(135deg, var(--accent-light) 0%, var(--gold-light) 100%);border:2px solid var(--accent);border-radius:12px;padding:28px;">
+    <div style="display:flex;gap:20px;align-items:flex-start;">
+      <div style="font-size:36px;line-height:1;">🛡️</div>
+      <div>
+        <h3 style="font-size:16px;margin-bottom:10px;color:var(--accent);">Defense-in-Depth Philosophy</h3>
+        <div style="font-size:12px;color:var(--ink2);line-height:1.7;">
+          <strong style="color:var(--accent);">Why IP bans alone fail:</strong> Red Team switches IPs via VPN/VM in seconds. A single-layer defense becomes a game of whack-a-mole.<br><br>
+          <strong style="color:var(--accent);">Our multi-layer strategy:</strong><br>
+          <strong>Layer 1 (OWASP)</strong> → Prevents 95% of automated attacks via input validation, rate limits, CORS, HTTPS.<br>
+          <strong>Layer 2 (Defense Agent)</strong> → Detects the 5% that slip through by correlating behavioral patterns across sessions, not just IPs.<br>
+          <strong>Fingerprint persistence</strong> → Browser fingerprint survives IP rotation. Attacker must completely change browser + OS + hardware to evade.<br>
+          <strong>Progressive escalation</strong> → First offense: soft ban. Second: CAPTCHA. Third: account suspension. Fourth: Cloudflare global block at CDN edge.<br>
+          <strong>Upstream mitigation</strong> → Defense agent pushes malicious fingerprints to Cloudflare WAF. Attack traffic blocked before it reaches origin server — zero load on FastAPI/MongoDB.<br><br>
+          <strong style="color:var(--accent);">Result:</strong> Even if Red Team rotates through 100 IPs, the fingerprint hash follows them. After 3 evasion attempts, they're globally blocked across Cloudflare's CDN — game over.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- THREAT MODEL SUMMARY -->
   <div style="margin-top:32px;background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:28px;">
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);margin-bottom:16px;">RED TEAM ATTACK SURFACE ANALYSIS</div>
@@ -1519,6 +1570,11 @@ footer {
       <div style="background:var(--bg);border-radius:8px;padding:16px;">
         <div style="font-size:11px;font-weight:600;margin-bottom:6px;">🎯 Rate Limits</div>
         <div style="font-size:10px;color:var(--ink3);line-height:1.5;"><strong style="color:var(--red);">Risk:</strong> Distributed botnet bypass<br><strong style="color:var(--accent);">Mitigation:</strong> Layer 2 pattern correlation across IPs</div>
+      </div>
+
+      <div style="background:var(--bg);border-radius:8px;padding:16px;">
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px;">🎯 VPN IP Rotation</div>
+        <div style="font-size:10px;color:var(--ink3);line-height:1.5;"><strong style="color:var(--red);">Risk:</strong> Ban evasion via rapid IP switching<br><strong style="color:var(--accent);">Mitigation:</strong> Browser fingerprint persistence, Cloudflare WAF global block, hCaptcha Enterprise</div>
       </div>
 
       <div style="background:var(--bg);border-radius:8px;padding:16px;">
